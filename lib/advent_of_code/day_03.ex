@@ -4,7 +4,13 @@ defmodule AdventOfCode.Day03 do
     slide a_map, 0, 0, 1, 3
   end
 
-  def part2(_args) do
+  def part2(args) do
+    a_map = parse_input(args)
+    Enum.reduce(
+      [{1, 1}, {1, 3}, {1, 5}, {1, 7}, {2, 1}],
+      1,
+      fn {r, c}, acc -> acc * slide(a_map, 0, 0, r, c) end
+    )
   end
 
   defp slide(a_map, row, column, v_row, v_column) do
@@ -20,8 +26,6 @@ defmodule AdventOfCode.Day03 do
 
   defp parse_input(args) do
     String.split(args)
-#    |> Enum.map(&Integer.parse(&1))
-#    |> Enum.map(&elem(&1,0))
   end
 
 
