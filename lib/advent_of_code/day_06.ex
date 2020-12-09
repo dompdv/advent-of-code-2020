@@ -20,9 +20,9 @@ defmodule AdventOfCode.Day06 do
 
   defp intersect_count(string_list) do
     string_list
-    |> Enum.map(&String.graphemes/1)
-    |> Enum.map(&MapSet.new/1)
-    |> Enum.reduce(fn x, acc -> MapSet.intersection(x, acc) end)
+    |> Enum.map(&String.graphemes/1) # convert String to List
+    |> Enum.map(&MapSet.new/1) # Convert List to MapSet
+    |> Enum.reduce(fn x, acc -> MapSet.intersection(x, acc) end) # Intersect all MapSet into one
     |> Enum.count()
   end
 
