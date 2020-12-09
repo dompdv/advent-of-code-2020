@@ -27,6 +27,4 @@ defmodule AdventOfCode.Day03 do
   defp parse_input(args) do
     String.split(args)
   end
-
-
 end
