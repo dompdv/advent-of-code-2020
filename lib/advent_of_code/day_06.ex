@@ -5,13 +5,24 @@ defmodule AdventOfCode.Day06 do
     |> Enum.sum()
   end
 
-  def part2(_args) do
+  def part2(args) do
+    parse_input(args)
+    |> Enum.map(&intersect_count/1)
+    |> Enum.sum()
   end
 
   defp concat_deduplicate_count(string_list) do
     string_list
     |> List.foldl([], fn x, acc -> String.graphemes(x) ++ acc end)
     |> Enum.uniq()
+    |> Enum.count()
+  end
+
+  defp intersect_count(string_list) do
+    string_list
+    |> Enum.map(&String.graphemes/1)
+    |> Enum.map(&MapSet.new/1)
+    |> Enum.reduce(fn x, acc -> MapSet.intersection(x, acc) end)
     |> Enum.count()
   end
 
