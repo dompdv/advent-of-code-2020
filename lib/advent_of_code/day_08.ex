@@ -7,8 +7,25 @@ defmodule AdventOfCode.Day08 do
   def part2(args) do
     program = parse(args)
     possible_changes(0, program, [])
+    |> Enum.map(fn change -> tweak_program(program, change) end)
+    |> Stream.map(&run/1)
+    |> Stream.drop_while(&looping?/1)
+    |> Enum.take(1)
+    |> Enum.at(0)
+    |> acc()
   end
 
+  defp tweak_program(program, {line, new_command}) do
+    Enum.with_index(program) |> Enum.map(
+      fn {command, l} ->
+        if l == line do
+          new_command
+        else
+          command
+        end
+      end)
+
+  end
   defp possible_changes(_line, [], change_list) do
     change_list
   end
