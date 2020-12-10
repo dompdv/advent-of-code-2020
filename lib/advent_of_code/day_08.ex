@@ -1,20 +1,32 @@
 defmodule AdventOfCode.Day08 do
   def part1(args) do
     program = parse(args)
-    run(load(program)) |> acc()
+    run(program) |> acc()
   end
 
   def part2(args) do
     program = parse(args)
+    possible_changes(0, program, [])
+  end
 
+  defp possible_changes(_line, [], change_list) do
+    change_list
+  end
+
+  defp possible_changes(line, [{op, par} | program], change_list) do
+    case op do
+      :nop -> possible_changes(line + 1, program, [{line, {:jmp, par}} | change_list])
+      :acc -> possible_changes(line + 1, program, change_list)
+      :jmp -> possible_changes(line + 1, program, [{line, {:nop, par}} | change_list])
+    end
   end
 
   defp load(program) do
     %{program: program, pc: 0, visited: MapSet.new(), acc: 0, running: true, looping: false, len: Enum.count(program)}
   end
 
-  defp run(computer) do
-    Stream.iterate(computer, &execute/1)
+  defp run(program) do
+    Stream.iterate(load(program), &execute/1)
     |> Stream.drop_while(&running?/1)
     |> Enum.take(1)
     |> Enum.at(0)
