@@ -1,13 +1,21 @@
 defmodule AdventOfCode.Day07 do
   def part1(args) do
     rules = parse_input(args)
-    #IO.inspect(rules)
     (recursive_search(rules, ["shiny gold"], MapSet.new()) |> Enum.count()) - 1
   end
 
-  def part2(_args) do
+  def part2(args) do
+    rules = parse_input(args) |> Map.new()
+    recursive_count(rules, "shiny gold") - 1
   end
 
+  defp recursive_count(rules, container) do
+    1 +
+    Enum.reduce(
+      Map.get(rules, container),
+      0,
+      fn {bag, qty}, acc -> acc + qty * recursive_count(rules, bag) end)
+  end
 
   defp recursive_search(_rules, [], found) do
     found
