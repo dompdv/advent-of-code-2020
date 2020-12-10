@@ -32,9 +32,9 @@ defmodule AdventOfCode.Day08 do
     acc
   end
 
-  defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running, looping: looping, len: length} = computer) do
+  defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running, len: length} = computer) do
     if not running do
-      %{computer | running: false}
+      computer
     else
         if MapSet.member?(visited, pc) do
           %{computer | running: false, looping: true}
