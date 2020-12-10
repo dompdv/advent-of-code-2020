@@ -1,40 +1,53 @@
 defmodule AdventOfCode.Day08 do
   def part1(args) do
     program = parse(args)
-    Stream.iterate(load(program), &execute/1)
-    |> Stream.drop_while(&running?/1)
-    |> Enum.take(1)
-    |> Enum.at(0)
-    |> acc()
+    run(load(program)) |> acc()
   end
 
-  def part2(_args) do
+  def part2(args) do
+    program = parse(args)
+
   end
 
   defp load(program) do
-    %{program: program, pc: 0, visited: MapSet.new(), acc: 0, running: true}
+    %{program: program, pc: 0, visited: MapSet.new(), acc: 0, running: true, looping: false, len: Enum.count(program)}
+  end
+
+  defp run(computer) do
+    Stream.iterate(computer, &execute/1)
+    |> Stream.drop_while(&running?/1)
+    |> Enum.take(1)
+    |> Enum.at(0)
   end
 
   def running?(%{running: running}) do
     running
   end
 
+  def looping?(%{looping: looping}) do
+    looping
+  end
+
   defp acc(%{acc: acc}) do
     acc
   end
 
-  defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running}) do
+  defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running, looping: looping, len: length} = computer) do
     if not running do
-      %{program: program, pc: pc, visited: visited, acc: acc, running: false}
+      %{computer | running: false}
     else
         if MapSet.member?(visited, pc) do
-          %{program: program, pc: pc, visited: visited, acc: acc, running: false}
+          %{computer | running: false, looping: true}
         else
-          {op, par} = Enum.at(program, pc)
-          case op do
-            :nop -> %{program: program, pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc, running: true}
-            :acc -> %{program: program, pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par, running: true}
-            :jmp -> %{program: program, pc: pc + par, visited: MapSet.put(visited, pc), acc: acc , running: true}
+          if pc >= length do
+            %{computer | running: false, looping: false}
+          else
+            {op, par} = Enum.at(program, pc)
+            case op do
+              :nop -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc)}
+              :acc -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par}
+              :jmp -> %{computer | pc: pc + par, visited: MapSet.put(visited, pc)}
+            end
           end
         end
     end
