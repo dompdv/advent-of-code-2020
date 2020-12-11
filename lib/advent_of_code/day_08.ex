@@ -10,25 +10,18 @@ defmodule AdventOfCode.Day08 do
     |> Enum.map(fn change -> tweak_program(program, change) end)
     |> Stream.map(&run/1)
     |> Stream.drop_while(&looping?/1)
-    |> Enum.take(1)
-    |> Enum.at(0)
-    |> acc()
+    |> Enum.take(1) |> Enum.at(0) |> acc()
   end
 
   defp tweak_program(program, {line, new_command}) do
-    Enum.with_index(program) |> Enum.map(
+    Enum.with_index(program)
+    |> Enum.map(
       fn {command, l} ->
-        if l == line do
-          new_command
-        else
-          command
-        end
+        if l == line, do: new_command, else: command
       end)
+  end
 
-  end
-  defp possible_changes(_line, [], change_list) do
-    change_list
-  end
+  defp possible_changes(_line, [], change_list), do: change_list
 
   defp possible_changes(line, [{op, par} | program], change_list) do
     case op do
@@ -49,36 +42,21 @@ defmodule AdventOfCode.Day08 do
     |> Enum.at(0)
   end
 
-  def running?(%{running: running}) do
-    running
-  end
-
-  def looping?(%{looping: looping}) do
-    looping
-  end
-
-  defp acc(%{acc: acc}) do
-    acc
-  end
+  def running?(%{running: running}), do: running
+  def looping?(%{looping: looping}), do: looping
+  defp acc(%{acc: acc}), do: acc
 
   defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running, len: length} = computer) do
-    if not running do
-      computer
-    else
-        if MapSet.member?(visited, pc) do
-          %{computer | running: false, looping: true}
-        else
-          if pc >= length do
-            %{computer | running: false, looping: false}
-          else
-            {op, par} = Enum.at(program, pc)
-            case op do
-              :nop -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc)}
-              :acc -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par}
-              :jmp -> %{computer | pc: pc + par, visited: MapSet.put(visited, pc)}
-            end
-          end
-        end
+    cond do
+      not running -> computer
+      MapSet.member?(visited, pc) -> %{computer | running: false, looping: true}
+      pc >= length -> %{computer | running: false, looping: false}
+      true -> {op, par} = Enum.at(program, pc)
+              case op do
+                :nop -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc)}
+                :acc -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par}
+                :jmp -> %{computer | pc: pc + par, visited: MapSet.put(visited, pc)}
+              end
     end
   end
 
