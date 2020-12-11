@@ -38,8 +38,7 @@ defmodule AdventOfCode.Day08 do
   defp run(program) do
     Stream.iterate(load(program), &execute/1)
     |> Stream.drop_while(&running?/1)
-    |> Enum.take(1)
-    |> Enum.at(0)
+    |> Enum.take(1) |> Enum.at(0)
   end
 
   def running?(%{running: running}), do: running
