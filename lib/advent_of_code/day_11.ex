@@ -1,11 +1,29 @@
 defmodule AdventOfCode.Day11 do
   def part1(args) do
     waiting_area = parse(args)
-    state = (for i <- Map.keys(waiting_area), do: {i, 0}) |> Map.new()
-    state
-  end
+    initial_state = (for i <- Map.keys(waiting_area), do: {i, 0}) |> Map.new()
+    [{_, _, stable_state}] =
+      Stream.iterate({waiting_area, true, initial_state}, &tick/1)
+      |> Stream.drop_while(fn {_, modified, _} -> modified end)
+      |> Enum.take(1)
+    Enum.sum(Map.values(stable_state))
+ end
 
   def part2(_rgs) do
+  end
+
+  defp tick({area, _ , state}) do
+    new_state =
+      (for i <- Map.keys(area) do
+      adjacent_seats = Enum.sum(Enum.map(area[i], fn seat -> state[seat] end))
+      cond do
+        state[i] == 0 and adjacent_seats == 0 -> {i, 1, true}
+        state[i] == 1 and adjacent_seats >= 4 -> {i, 0, true}
+        true -> {i, state[i], false}
+      end
+    end)
+    modified = Enum.any?(new_state, fn {_, _, m} -> m end)
+    {area, modified, Enum.map(new_state, fn {i, v, _} -> {i, v} end) |> Map.new()}
   end
 
   defp is_seat(input, rows, cols, r, c) do
