@@ -19,13 +19,35 @@ defmodule AdventOfCode.Day12 do
     end
   end
 
-  def part2(_args) do
+  def part2(args) do
+    %{x: x, y: y} = Enum.reduce(parse(args), %{x: 0, y: 0, dx: 10, dy: 1}, &move2/2)
+    abs(x) + abs(y)
+  end
+
+  def move2({cmd, par}, %{x: x, y: y, dx: dx, dy: dy} = state) do
+    cond do
+      cmd == "F" -> %{state | x: x + par * dx, y: y + par * dy}
+      cmd == "R" -> case par do
+                      0 -> state
+                      90 -> %{state | dx: dy, dy: -dx}
+                      180 -> %{state | dx: -dx, dy: -dy}
+                      270 -> %{state | dx: -dy, dy: dx}
+                    end
+      cmd == "L" -> case par do
+                    0 -> state
+                    90 -> %{state | dx: -dy, dy: dx}
+                    180 -> %{state | dx: -dx, dy: -dy}
+                    270 -> %{state | dx: dy, dy: -dx}
+                  end
+      true -> {vx, vy} = @directions[cmd]
+              %{state | dx: dx + par * vx, dy: dy + par * vy}
+    end
   end
 
   defp parse(input) do
     # acquire and clean
     input |> String.split("\n") |> Enum.filter(&(&1 != "")) |> Enum.map(&String.trim/1)
     # parse each line
-    |> Enum.map(fn s -> {String.at(s, 0) , String.slice(s, 1..-1) |> String.to_integer} end) |> IO.inspect()
+    |> Enum.map(fn s -> {String.at(s, 0) , String.slice(s, 1..-1) |> String.to_integer} end)
   end
 end
