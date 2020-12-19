@@ -1,9 +1,18 @@
 defmodule AdventOfCode.Day16 do
   def part1(args) do
-    parse(args)
+    {_, input} = parse(args)
+
+    Enum.flat_map(input.nearby, fn x->x end)
+    |> Enum.filter( &(not valid_number?(&1, input.rules)))
+    |> Enum.sum()
   end
 
   def part2(_args) do
+  end
+
+  def valid_number?(number, rules) do
+    Enum.any?(rules,
+            fn {_, ranges} -> Enum.any?(ranges, fn {l, h} -> l <= number and number <= h end) end)
   end
 
   defp parse(input) do
