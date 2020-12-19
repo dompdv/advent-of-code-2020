@@ -1,12 +1,20 @@
 defmodule AdventOfCode.Day15 do
   def part1(args) do
+    play(args, 2020)
+  end
+
+  def part2(args) do
+    play(args, 30000000)
+  end
+
+  def play(args, turns) do
     # Process the starting sequence
     starting_len = Enum.count(args)
     starting = Enum.zip(1..starting_len, args)
     state_after_starting = Enum.reduce(starting, {0, %{}}, &update_starting/2)
 
     # Play
-    {last, _} = Enum.reduce((starting_len + 1)..2020, state_after_starting, &play_turn/2)
+    {last, _} = Enum.reduce((starting_len + 1)..turns, state_after_starting, &play_turn/2)
     last
   end
 
@@ -33,6 +41,4 @@ defmodule AdventOfCode.Day15 do
     end
   end
 
-  def part2(_args) do
-  end
 end
