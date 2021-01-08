@@ -1,8 +1,38 @@
 defmodule AdventOfCode.Day19 do
   def part1(args) do
-    parse(args)
+    {rules, msgs} = parse(args)
+    msgs |> Enum.map(fn msg -> check_rules(msg, rules[0], rules) end)
+    |> Enum.map(fn {t, s} -> t and s == "" end)
+    |> Enum.filter(fn t -> t end)
+    |> Enum.count()
   end
 
+  def check_rules(msg, rule, rules) do
+    #IO.inspect({msg, rule})
+    case rule do
+      {:str, s} ->  l = String.length(s)
+                    if String.slice(msg, 0..(l-1)) == s do
+                      {true, String.slice(msg, l..-1)}
+                    else
+                      {false, msg}
+                    end
+      {:rule, []} -> {true, msg}
+      {:rule, [h | r]} -> {checked, remainder} = check_rules(msg, rules[h], rules)
+                          if checked do
+                            check_rules(remainder, {:rule, r}, rules)
+                          else
+                            {false, msg}
+                          end
+      {:alt, left, right} -> {check_left, m_left} = check_rules(msg, {:rule, left}, rules)
+                             {check_right, m_right} = check_rules(msg, {:rule, right}, rules)
+                             #IO.inspect({{check_left, m_left} , {check_right, m_right} })
+                             cond do
+                              check_left  -> {true, m_left}
+                              check_right -> {true, m_right}
+                              true -> {false, msg}
+                             end
+    end
+  end
   def part2(_args) do
   end
 
@@ -17,7 +47,7 @@ defmodule AdventOfCode.Day19 do
       fn {rule_number, r} ->
         cond do
           String.contains?(r, ~s(")) -> [_, msg, _] = String.split(r, ~s("))
-                                        {rule_number, {:msg, msg}}
+                                        {rule_number, {:str, msg}}
           String.contains?(r, "|") ->   [left, right] = String.split(r, "|")
                                         {rule_number, {:alt, to_list(left), to_list(right)}}
           true -> {rule_number, {:rule, to_list(r)}}
