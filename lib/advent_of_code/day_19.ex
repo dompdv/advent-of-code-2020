@@ -7,7 +7,7 @@ defmodule AdventOfCode.Day19 do
   def part2(args) do
     {rules, msgs} = parse(args)
     process(rules, msgs, fn rules ->
-      rules |> Map.put(8, {:alt, [42], [42, 8]}) |> Map.put(11, {:alt, [42, 31], [42, 11, 31]})
+      rules |> Map.put("8", {:alt, ["42"], ["42", "8"]}) |> Map.put("11", {:alt, ["42", "31"], ["42", "11", "31"]})
     end)
   end
 
@@ -23,7 +23,7 @@ defmodule AdventOfCode.Day19 do
     if String.first(msg) == s, do: {true, String.slice(msg, 1..-1)}, else: {false, msg}
   end
 
-  def check_rules(msg, {:subrules, []}, _rules), do: {true, msg}
+  def check_rules(msg, {:subrules, [h]}, rules), do: check_rules(msg, rules[h], rules)
 
   def check_rules(msg, {:subrules, [h | r]}, rules) do
     {checked, remainder} = check_rules(msg, rules[h], rules)
@@ -33,7 +33,6 @@ defmodule AdventOfCode.Day19 do
   def check_rules(msg, {:alt, left, right}, rules) do
     {check_left, m_left} = check_rules(msg, {:subrules, left}, rules)
     {check_right, m_right} = check_rules(msg, {:subrules, right}, rules)
-
     cond do
       check_left -> {true, m_left}
       check_right -> {true, m_right}
