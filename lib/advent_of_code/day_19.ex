@@ -25,39 +25,25 @@ defmodule AdventOfCode.Day19 do
     #    |> Enum.count()
   end
 
-  def check_rules(msg, rule, rules) do
-    # IO.inspect({msg, rule})
-    case rule do
-      {:str, s} ->
-        l = String.length(s)
+  def check_rules(msg, {:str, s}, _rules) do
+    if String.first(msg) == s, do: {true, String.slice(msg, 1..-1)}, else: {false, msg}
+  end
 
-        if String.slice(msg, 0..(l - 1)) == s do
-          {true, String.slice(msg, l..-1)}
-        else
-          {false, msg}
-        end
+  def check_rules(msg, {:rule, []}, _rules), do: {true, msg}
 
-      {:rule, []} ->
-        {true, msg}
+  def check_rules(msg, {:rule, [h | r]}, rules) do
+    {checked, remainder} = check_rules(msg, rules[h], rules)
+    if checked, do: check_rules(remainder, {:rule, r}, rules), else: {false, msg}
+  end
 
-      {:rule, [h | r]} ->
-        {checked, remainder} = check_rules(msg, rules[h], rules)
+  def check_rules(msg, {:alt, left, right}, rules) do
+    {check_left, m_left} = check_rules(msg, {:rule, left}, rules)
+    {check_right, m_right} = check_rules(msg, {:rule, right}, rules)
 
-        if checked do
-          check_rules(remainder, {:rule, r}, rules)
-        else
-          {false, msg}
-        end
-
-      {:alt, left, right} ->
-        {check_left, m_left} = check_rules(msg, {:rule, left}, rules)
-        {check_right, m_right} = check_rules(msg, {:rule, right}, rules)
-
-        cond do
-          check_left -> {true, m_left}
-          check_right -> {true, m_right}
-          true -> {false, msg}
-        end
+    cond do
+      check_left -> {true, m_left}
+      check_right -> {true, m_right}
+      true -> {false, msg}
     end
   end
 
@@ -69,7 +55,7 @@ defmodule AdventOfCode.Day19 do
   def parse_rules(rules) do
     rules
     |> String.split("\n")
-    |> Enum.map(fn x -> x |> String.trim() |> String.split(":") end)
+    |> Enum.map(fn x -> x |> String.trim() |> String.split(": ") end)
     |> Enum.map(fn [rule_number, r] -> {String.to_integer(rule_number), String.trim(r)} end)
     |> Enum.map(fn {rule_number, r} ->
       cond do
@@ -89,11 +75,11 @@ defmodule AdventOfCode.Day19 do
   end
 
   def parse_msg(rules) do
-    rules |> String.split("\n") |> Enum.map(&String.trim/1) |> Enum.filter(fn x -> x != "" end)
+    rules |> String.split("\n", trim: true) |> Enum.map(&String.trim/1)
   end
 
   def parse(input) do
-    [rules, msg] = String.split(input, "\n\n")
+    [rules, msg] = String.split(input, "\n\n", trim: true)
     {parse_rules(rules), parse_msg(msg)}
   end
 end
