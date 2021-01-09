@@ -6,19 +6,21 @@ defmodule AdventOfCode.Day08 do
 
   def part2(args) do
     program = parse(args)
+
     possible_changes(0, program, [])
     |> Enum.map(fn change -> tweak_program(program, change) end)
     |> Stream.map(&run/1)
     |> Stream.drop_while(&looping?/1)
-    |> Enum.take(1) |> Enum.at(0) |> acc()
+    |> Enum.take(1)
+    |> Enum.at(0)
+    |> acc()
   end
 
   defp tweak_program(program, {line, new_command}) do
     Enum.with_index(program)
-    |> Enum.map(
-      fn {command, l} ->
-        if l == line, do: new_command, else: command
-      end)
+    |> Enum.map(fn {command, l} ->
+      if l == line, do: new_command, else: command
+    end)
   end
 
   defp possible_changes(_line, [], change_list), do: change_list
@@ -32,42 +34,61 @@ defmodule AdventOfCode.Day08 do
   end
 
   defp load(program) do
-    %{program: program, pc: 0, visited: MapSet.new(), acc: 0, running: true, looping: false, len: Enum.count(program)}
+    %{
+      program: program,
+      pc: 0,
+      visited: MapSet.new(),
+      acc: 0,
+      running: true,
+      looping: false,
+      len: Enum.count(program)
+    }
   end
 
   defp run(program) do
     Stream.iterate(load(program), &execute/1)
     |> Stream.drop_while(&running?/1)
-    |> Enum.take(1) |> Enum.at(0)
+    |> Enum.take(1)
+    |> Enum.at(0)
   end
 
   def running?(%{running: running}), do: running
   def looping?(%{looping: looping}), do: looping
   defp acc(%{acc: acc}), do: acc
 
-  defp execute(%{program: program, pc: pc, visited: visited, acc: acc, running: running, len: length} = computer) do
+  defp execute(
+         %{program: program, pc: pc, visited: visited, acc: acc, running: running, len: length} =
+           computer
+       ) do
     cond do
-      not running -> computer
-      MapSet.member?(visited, pc) -> %{computer | running: false, looping: true}
-      pc >= length -> %{computer | running: false, looping: false}
-      true -> {op, par} = Enum.at(program, pc)
-              case op do
-                :nop -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc)}
-                :acc -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par}
-                :jmp -> %{computer | pc: pc + par, visited: MapSet.put(visited, pc)}
-              end
+      not running ->
+        computer
+
+      MapSet.member?(visited, pc) ->
+        %{computer | running: false, looping: true}
+
+      pc >= length ->
+        %{computer | running: false, looping: false}
+
+      true ->
+        {op, par} = Enum.at(program, pc)
+
+        case op do
+          :nop -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc)}
+          :acc -> %{computer | pc: pc + 1, visited: MapSet.put(visited, pc), acc: acc + par}
+          :jmp -> %{computer | pc: pc + par, visited: MapSet.put(visited, pc)}
+        end
     end
   end
 
   defp parse_line(line) do
     [cmd, parameter] = line |> String.split(" ")
-    { case cmd do
-      "nop" -> :nop
-      "acc" -> :acc
-      "jmp" -> :jmp
-    end,
-      String.to_integer(parameter)
-    }
+
+    {case cmd do
+       "nop" -> :nop
+       "acc" -> :acc
+       "jmp" -> :jmp
+     end, String.to_integer(parameter)}
   end
 
   defp parse(input) do

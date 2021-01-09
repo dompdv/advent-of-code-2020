@@ -12,7 +12,6 @@ defmodule Mix.Tasks.D12.P2 do
     F11"
     input = AdventOfCode.Input.get!(12, 2020)
 
-
     if Enum.member?(args, "-b"),
       do: Benchee.run(%{part_2: fn -> input |> part2() end}),
       else:

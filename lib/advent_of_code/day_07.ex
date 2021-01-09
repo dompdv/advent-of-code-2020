@@ -11,10 +11,11 @@ defmodule AdventOfCode.Day07 do
 
   defp recursive_count(rules, container) do
     1 +
-    Enum.reduce(
-      Map.get(rules, container),
-      0,
-      fn {bag, qty}, acc -> acc + qty * recursive_count(rules, bag) end)
+      Enum.reduce(
+        Map.get(rules, container),
+        0,
+        fn {bag, qty}, acc -> acc + qty * recursive_count(rules, bag) end
+      )
   end
 
   defp recursive_search(_rules, [], found) do
@@ -33,24 +34,28 @@ defmodule AdventOfCode.Day07 do
   end
 
   defp parse_rule(rule) do
-    [left, right] = String.split(rule, " contain ")
-                    |> Enum.map(&String.replace(&1,"bags", ""))
-                    |> Enum.map(&String.replace(&1,"bag", ""))
-                    |> Enum.map(&String.trim(&1,"."))
-                    |> Enum.map(&String.trim(&1))
-    bag = if right == "no other" do
-      %{}
-    else
-      String.split(right, ",")
-              |> Enum.map(&String.trim(&1))
-              |> Enum.map(fn stmt ->
-                            [qty | rest] = String.split(stmt, " ")
-                            qty = String.to_integer(qty)
-                            bag = Enum.join(rest, " ")
-                            {bag, qty}
-                          end)
-              |> Enum.into(%{})
-    end
+    [left, right] =
+      String.split(rule, " contain ")
+      |> Enum.map(&String.replace(&1, "bags", ""))
+      |> Enum.map(&String.replace(&1, "bag", ""))
+      |> Enum.map(&String.trim(&1, "."))
+      |> Enum.map(&String.trim(&1))
+
+    bag =
+      if right == "no other" do
+        %{}
+      else
+        String.split(right, ",")
+        |> Enum.map(&String.trim(&1))
+        |> Enum.map(fn stmt ->
+          [qty | rest] = String.split(stmt, " ")
+          qty = String.to_integer(qty)
+          bag = Enum.join(rest, " ")
+          {bag, qty}
+        end)
+        |> Enum.into(%{})
+      end
+
     {left, bag}
   end
 

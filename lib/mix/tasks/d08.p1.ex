@@ -14,7 +14,8 @@ acc -99
 acc +1
 jmp -4
 acc +6"
-input = AdventOfCode.Input.get!(8, 2020)
+    input = AdventOfCode.Input.get!(8, 2020)
+
     if Enum.member?(args, "-b"),
       do: Benchee.run(%{part_1: fn -> input |> part1() end}),
       else:

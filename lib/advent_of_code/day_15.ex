@@ -4,7 +4,7 @@ defmodule AdventOfCode.Day15 do
   end
 
   def part2(args) do
-    play(args, 30000000)
+    play(args, 30_000_000)
   end
 
   def play(args, turns) do
@@ -40,5 +40,4 @@ defmodule AdventOfCode.Day15 do
       {0, update_log(turn, 0, log)}
     end
   end
-
 end

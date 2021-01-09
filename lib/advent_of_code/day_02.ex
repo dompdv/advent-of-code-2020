@@ -16,8 +16,8 @@ defmodule AdventOfCode.Day02 do
 
   defp is_valid_p2({low, high, letter, password}) do
     first = String.at(password, low - 1) == letter
-    last =  String.at(password, high - 1) == letter
-    (first or last) and (not (first and last))
+    last = String.at(password, high - 1) == letter
+    (first or last) and not (first and last)
   end
 
   defp parse_line([a, b, c]) do

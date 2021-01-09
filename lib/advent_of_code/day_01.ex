@@ -15,29 +15,29 @@ defmodule AdventOfCode.Day01 do
   defp parse_input(args) do
     String.split(args)
     |> Enum.map(&Integer.parse(&1))
-    |> Enum.map(&elem(&1,0))
+    |> Enum.map(&elem(&1, 0))
   end
 
   defp scan([], _target) do
-    :nil
+    nil
   end
 
   defp scan([h | r], target) do
-    case narrow(r, target - h)  do
-       {:ok, result} -> {:ok, h * result}
-       _ -> scan(r, target)
+    case narrow(r, target - h) do
+      {:ok, result} -> {:ok, h * result}
+      _ -> scan(r, target)
     end
-
   end
 
   defp narrow([], _target) do
-    :nil
+    nil
   end
 
   defp narrow(expenses, target) do
     f = List.first(expenses)
     l = List.last(expenses)
-    t =  f + l
+    t = f + l
+
     cond do
       t == target -> {:ok, f * l}
       t < target -> narrow(Enum.slice(expenses, 1..-1), target)

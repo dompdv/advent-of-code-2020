@@ -1,11 +1,12 @@
 defmodule AdventOfCode.Day03 do
   def part1(args) do
     a_map = parse_input(args)
-    slide a_map, 0, 0, 1, 3
+    slide(a_map, 0, 0, 1, 3)
   end
 
   def part2(args) do
     a_map = parse_input(args)
+
     Enum.reduce(
       [{1, 1}, {1, 3}, {1, 5}, {1, 7}, {2, 1}],
       1,

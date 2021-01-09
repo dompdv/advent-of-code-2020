@@ -3,6 +3,6 @@ defmodule AdventOfCode.Day20 do
     args
   end
 
-def part2(_args) do
+  def part2(_args) do
   end
 end
