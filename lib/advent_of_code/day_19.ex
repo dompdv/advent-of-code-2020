@@ -6,13 +6,17 @@ defmodule AdventOfCode.Day19 do
 
   def part2(args) do
     {rules, msgs} = parse(args)
+
     process(rules, msgs, fn rules ->
-      rules |> Map.put("8", {:alt, ["42"], ["42", "8"]}) |> Map.put("11", {:alt, ["42", "31"], ["42", "11", "31"]})
+      rules
+      |> Map.put("8", {:alt, ["42"], ["42", "8"]})
+      |> Map.put("11", {:alt, ["42", "31"], ["42", "11", "31"]})
     end)
   end
 
   def process(rules, msgs, alter_func) do
     rules = alter_func.(rules)
+
     msgs
     |> Enum.map(fn msg -> check_rules(msg, rules["0"], rules) end)
     |> Enum.filter(fn {t, s} -> t and s == "" end)
@@ -33,9 +37,10 @@ defmodule AdventOfCode.Day19 do
   def check_rules(msg, {:alt, left, right}, rules) do
     {check_left, m_left} = check_rules(msg, {:subrules, left}, rules)
     {check_right, m_right} = check_rules(msg, {:subrules, right}, rules)
+
     cond do
-      check_left -> {true, m_left}
       check_right -> {true, m_right}
+      check_left -> {true, m_left}
       true -> {false, msg}
     end
   end
@@ -63,7 +68,7 @@ defmodule AdventOfCode.Day19 do
     |> String.split("\n", trim: true)
     |> Enum.map(fn x ->
       [rule_number, r] = String.split(x, ": ", trim: true)
-      parse_rule(String.trim(rule_number) , String.trim(r))
+      parse_rule(String.trim(rule_number), String.trim(r))
     end)
     |> Map.new()
   end

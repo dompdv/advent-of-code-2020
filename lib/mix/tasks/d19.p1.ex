@@ -17,6 +17,7 @@ bababa
 abbbab
 aaabbb
 aaaabbb)
+
     input = AdventOfCode.Input.get!(19, 2020)
 
     if Enum.member?(args, "-b"),

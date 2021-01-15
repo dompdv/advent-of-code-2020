@@ -5,7 +5,12 @@ defmodule Mix.Tasks.D19.P2 do
 
   @shortdoc "Day 19 Part 2"
   def run(args) do
-    _input = AdventOfCode.Input.get!(19, 2020)
+    input = ~s(0: 1 5
+1: 4 | 5 1 4
+4: "a"
+5: "b"
+
+bbbaaaab)
     input = ~s(42: 9 14 | 10 1
 9: 14 27 | 1 26
 10: 23 14 | 28 1
@@ -38,21 +43,9 @@ defmodule Mix.Tasks.D19.P2 do
 7: 14 5 | 1 21
 24: 14 1
 
-abbbbbabbbaaaababbaabbbbabababbbabbbbbbabaaaa
-bbabbbbaabaabba
-babbbbaabbbbbabbbbbbaabaaabaaa
-aaabbbbbbaaaabaababaabababbabaaabbababababaaa
-bbbbbbbaaaabbbbaaabbabaaa
-bbbababbbbaaaaaaaabbababaaababaabab
-ababaaaaaabaaab
-ababaaaaabbbaba
-baabbaaaabbaaaababbaababb
-abbbbabbbbaaaababbbbbbaaaababb
-aaaaabbaabaaaaababaa
-aaaabbaaaabbaaa
-aaaabbaabbaaaaaaabbbabbbaaabbaabaaa
-babaaabbbaaabaababbaabababaaab
-aabbbbbaabbbaaaaaabbbbbababaaaaabbaaabba)
+babbbbaabbbbbabbbbbbaabaaabaaa)
+
+    input = AdventOfCode.Input.get!(19, 2020)
 
     if Enum.member?(args, "-b"),
       do: Benchee.run(%{part_2: fn -> input |> part2() end}),
