@@ -1,7 +1,12 @@
 defmodule AdventOfCode.Day20 do
   def part1(args) do
-    tiles = parse(args) |> Enum.map(fn {number, tile} -> {number, process_tile(tile)} end)
+    tiles =
+      parse(args)
+      |> Enum.map(fn {number, tile} -> {number, process_tile(tile)} end)
+
     square_size = :math.sqrt(Enum.count(tiles)) |> trunc()
+    h = square_size - 1
+    IO.inspect({"Start", square_size})
 
     flat_tiles =
       tiles
@@ -10,17 +15,21 @@ defmodule AdventOfCode.Day20 do
       end)
       |> List.flatten()
 
-    IO.inspect(flat_tiles |> Enum.filter(fn {n, _} -> n == 3079 end))
-    find_solution(%{}, square_size, {0, 0}, flat_tiles)
+    sol = find_solution(%{}, square_size, {0, 0}, flat_tiles)
+
+    Enum.map([{0, 0}, {0, h}, {h, 0}, {h, h}], fn
+      c ->
+        {n, _} = sol[c]
+        n
+    end)
+    |> Enum.reduce(1, fn x, acc -> x * acc end)
   end
 
   def part2(_args) do
   end
 
   def find_solution(pavage, square_size, {row, col}, tiles) do
-    if row == 2 do
-      IO.inspect({"find sol", pavage, square_size, {row, col}, tiles})
-    end
+    IO.inspect({row, col})
     # si tout le pavage est rempli, alors on a trouvé une solution
     if row == square_size do
       pavage
@@ -50,20 +59,16 @@ defmodule AdventOfCode.Day20 do
           cond_1 and cond_2
         end)
 
-      IO.inspect({"Tiles", Enum.count(filtered_tiles)})
-
       if Enum.empty?(filtered_tiles) do
         # Si l'on n'a pas de possibilités, c'est qu'on a fait choux blanc
         nil
       else
         next_cell = if col == square_size - 1, do: {row + 1, 0}, else: {row, col + 1}
-        IO.inspect("Reduce while")
 
         filtered_tiles
         |> Enum.reduce_while(
           0,
           fn {number, _} = tile, _acc ->
-            IO.inspect({"Consider tile", tile})
             tiles_without_current_tile = tiles |> Enum.filter(fn {n, _} -> n != number end)
 
             res =
@@ -74,7 +79,6 @@ defmodule AdventOfCode.Day20 do
                 tiles_without_current_tile
               )
 
-            IO.inspect({"retour", res})
             if res == nil, do: {:cont, nil}, else: {:halt, res}
           end
         )
@@ -82,25 +86,53 @@ defmodule AdventOfCode.Day20 do
     end
   end
 
-  def produce_rotations({t, b, l, r}) do
-    #{t, b, l, r} = {String.to_integer(t, 2), String.to_integer(b, 2), String.to_integer(l, 2), String.to_integer(r, 2)}
-    [{t, b, l, r}, {l, r, b, t}, {b, t, r, l}, {r, l, t, b}]
+  defp rotate90(matrix) do
+    size = Enum.count(matrix) - 1
+
+    Enum.map(0..size, fn l ->
+      for(r <- 0..size, do: matrix |> Enum.at(r) |> Enum.at(l)) |> Enum.reverse()
+    end)
+  end
+
+  defp flipv(matrix) do
+    matrix |> Enum.map(fn l -> Enum.reverse(l) end)
+  end
+
+  defp fliph(matrix) do
+    Enum.reverse(matrix)
+  end
+
+  defp produce_rotations(matrix) do
+    matrix90 = rotate90(matrix)
+    matrix180 = rotate90(matrix90)
+    matrix270 = rotate90(matrix180)
+    [matrix, matrix90, matrix180, matrix270]
+  end
+
+  defp to_tblr(tile) do
+    {top, bottom, left, right} = {
+      List.first(tile),
+      List.last(tile),
+      for(line <- tile, do: String.first(line)) |> Enum.join(),
+      for(line <- tile, do: String.last(line)) |> Enum.join()
+    }
+
+    {String.to_integer(top, 2), String.to_integer(bottom, 2), String.to_integer(left, 2),
+     String.to_integer(right, 2)}
+  end
+
+  defp to_str(tile) do
+    Enum.map(tile, &Enum.join/1)
   end
 
   defp process_tile(tile) do
-    core =
-      {top, bottom, left, right} = {
-        List.first(tile),
-        List.last(tile),
-        for(line <- tile, do: String.first(line)) |> Enum.join(),
-        for(line <- tile, do: String.last(line)) |> Enum.join()
-      }
+    core = tile |> Enum.map(&String.graphemes/1)
+    flip_h = fliph(core)
+    flip_v = flipv(core)
 
-    flip_h = {String.reverse(top), String.reverse(bottom), right, left}
-    flip_v = {bottom, top, String.reverse(left), String.reverse(right)}
-    #flip_d = {String.reverse(bottom), String.reverse(top), String.reverse(right), String.reverse(left)}
-    [produce_rotations(core), produce_rotations(flip_h), produce_rotations(flip_v)] #, produce_rotations(flip_d)]
-    |> List.flatten()
+    (produce_rotations(core) ++ produce_rotations(flip_h) ++ produce_rotations(flip_v))
+    |> Enum.map(fn tile -> to_str(tile) end)
+    |> Enum.map(&to_tblr/1)
   end
 
   def parse(input) do
