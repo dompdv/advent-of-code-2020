@@ -6,10 +6,11 @@ defmodule AdventOfCode.Day20 do
     flat_tiles =
       tiles
       |> Enum.map(fn {number, tile} ->
-        for comb <- tile, do: {number, comb, MapSet.new(Tuple.to_list(comb))}
+        for comb <- tile, do: {number, comb}
       end)
       |> List.flatten()
 
+    IO.inspect(flat_tiles |> Enum.filter(fn {n, _} -> n == 3079 end))
     find_solution(%{}, square_size, {0, 0}, flat_tiles)
   end
 
@@ -17,6 +18,9 @@ defmodule AdventOfCode.Day20 do
   end
 
   def find_solution(pavage, square_size, {row, col}, tiles) do
+    if row == 2 do
+      IO.inspect({"find sol", pavage, square_size, {row, col}, tiles})
+    end
     # si tout le pavage est rempli, alors on a trouvé une solution
     if row == square_size do
       pavage
@@ -24,56 +28,63 @@ defmodule AdventOfCode.Day20 do
       # Sinon, considérons le carreau (tile) au dessus et le carreau à gauche de la position courante, s'ils existent
       {up, left} = {pavage[{row - 1, col}], pavage[{row, col - 1}]}
 
-      tiles =
-        if up do
-          # S'il y a un carreau au dessus, on réduit la liste des possibilités (tiles) des carreaux compatibles
-          {_number, {_t, b, _l, _r}, _mapset} = up
-          # garder les carreaux dont le t(op) est égale au (b)ottom du carreau du dessus
-          tiles
-          |> Enum.filter(fn {_number, {t, _b, _l, _r}, _edges} -> t == b end)
-        else
-          tiles
-        end
+      filtered_tiles =
+        tiles
+        |> Enum.filter(fn {_number, {t, _b, l, _r}} ->
+          cond_1 =
+            if up do
+              {_number, {_t, b, _l, _r}} = up
+              t == b
+            else
+              true
+            end
 
-      tiles =
-        if left do
-          {_number, {_t, _b, _l, r}, _mapset} = left
+          cond_2 =
+            if left do
+              {_number, {_t, _b, _l, r}} = left
+              l == r
+            else
+              true
+            end
 
-          tiles
-          |> Enum.filter(fn {_number, {_t, _b, l, _r}, _edges} -> l == r end)
-        else
-          tiles
-        end
+          cond_1 and cond_2
+        end)
 
-      if Enum.empty?(tiles) do
+      IO.inspect({"Tiles", Enum.count(filtered_tiles)})
+
+      if Enum.empty?(filtered_tiles) do
         # Si l'on n'a pas de possibilités, c'est qu'on a fait choux blanc
         nil
       else
         next_cell = if col == square_size - 1, do: {row + 1, 0}, else: {row, col + 1}
+        IO.inspect("Reduce while")
 
-        tiles
-        |> Enum.reduce_while(0, fn {number, _, _} = tile, _acc ->
-          tiles_without_current_tile = tiles |> Enum.filter(fn {n, _, _} -> n != number end)
+        filtered_tiles
+        |> Enum.reduce_while(
+          0,
+          fn {number, _} = tile, _acc ->
+            IO.inspect({"Consider tile", tile})
+            tiles_without_current_tile = tiles |> Enum.filter(fn {n, _} -> n != number end)
 
-          res =
-            find_solution(
-              Map.put(pavage, next_cell, tile),
-              square_size,
-              next_cell,
-              tiles_without_current_tile
-            )
+            res =
+              find_solution(
+                Map.put(pavage, {row, col}, tile),
+                square_size,
+                next_cell,
+                tiles_without_current_tile
+              )
 
-          if res, do: {:halt, res}, else: {:cont, 0}
-        end)
+            IO.inspect({"retour", res})
+            if res == nil, do: {:cont, nil}, else: {:halt, res}
+          end
+        )
       end
     end
   end
-  def produce_rotations({t, b, l, r}) do
-    {t, b, l, r} =
-      {String.to_integer(t, 2), String.to_integer(b, 2), String.to_integer(l, 2),
-       String.to_integer(r, 2)}
 
-    MapSet.new([{t, b, l, r}, {l, r, b, t}, {b, t, r, l}, {r, l, t, b}])
+  def produce_rotations({t, b, l, r}) do
+    #{t, b, l, r} = {String.to_integer(t, 2), String.to_integer(b, 2), String.to_integer(l, 2), String.to_integer(r, 2)}
+    [{t, b, l, r}, {l, r, b, t}, {b, t, r, l}, {r, l, t, b}]
   end
 
   defp process_tile(tile) do
@@ -87,10 +98,9 @@ defmodule AdventOfCode.Day20 do
 
     flip_h = {String.reverse(top), String.reverse(bottom), right, left}
     flip_v = {bottom, top, String.reverse(left), String.reverse(right)}
-
-    [produce_rotations(core), produce_rotations(flip_h), produce_rotations(flip_v)]
-    |> Enum.reduce(MapSet.new(), fn x, acc -> MapSet.union(x, acc) end)
-    |> MapSet.to_list()
+    #flip_d = {String.reverse(bottom), String.reverse(top), String.reverse(right), String.reverse(left)}
+    [produce_rotations(core), produce_rotations(flip_h), produce_rotations(flip_v)] #, produce_rotations(flip_d)]
+    |> List.flatten()
   end
 
   def parse(input) do
