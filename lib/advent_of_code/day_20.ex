@@ -1,8 +1,20 @@
 defmodule AdventOfCode.Day20 do
   def part1(args) do
+    {sol, square_size} = compute_solution(args)
+    h = square_size - 1
+
+    Enum.map([{0, 0}, {0, h}, {h, 0}, {h, h}], fn
+      c ->
+        {n, _} = sol[c]
+        n
+    end)
+    |> Enum.reduce(1, fn x, acc -> x * acc end)
+  end
+
+  def compute_solution(args) do
     tiles =
       parse(args)
-      |> Enum.map(fn {number, tile} -> {number, process_tile(tile)} end)
+      |> Enum.map(fn {number, tile} -> {number, process_tile(tile, true)} end)
 
     all_numbers =
       tiles
@@ -21,7 +33,6 @@ defmodule AdventOfCode.Day20 do
       |> Map.new()
 
     square_size = :math.sqrt(Enum.count(tiles)) |> trunc()
-    h = square_size - 1
 
     flat_tiles =
       tiles
@@ -31,17 +42,37 @@ defmodule AdventOfCode.Day20 do
       |> List.flatten()
       |> Enum.sort(fn {n1, _}, {n2, _} -> rank[n1] < rank[n2] end)
 
-    sol = find_solution(%{}, square_size, {0, 0}, flat_tiles)
-
-    Enum.map([{0, 0}, {0, h}, {h, 0}, {h, h}], fn
-      c ->
-        {n, _} = sol[c]
-        n
-    end)
-    |> Enum.reduce(1, fn x, acc -> x * acc end)
+    {find_solution(%{}, square_size, {0, 0}, flat_tiles), square_size}
   end
 
-  def part2(_args) do
+  def part2(args) do
+    tiles =
+      parse(args)
+      |> Enum.map(fn {number, tile} -> {number, process_tile(tile, false) |> Map.new()} end)
+      |> Map.new()
+
+    {sol, square_size} = compute_solution(args)
+    h = square_size - 1
+    IO.inspect(sol)
+
+    tiled_sol =
+      sol
+      |> Enum.map(fn {cell, {tile, comb}} -> {cell, trim_matrix(tiles[tile][comb])} end)
+      |> Map.new()
+
+    line_per_tile = Enum.count(tiled_sol[{0, 0}])
+
+    image =
+      for r <- 0..(square_size * line_per_tile - 1),
+          do:
+            Enum.join(
+              for c <- 0..h,
+                  do: Enum.at(tiled_sol[{div(r, line_per_tile), c}], rem(r, line_per_tile))
+            )
+  end
+
+  def trim_matrix(matrix) do
+    matrix |> Enum.slice(1..-2) |> Enum.map(fn s -> String.slice(s, 1..-2) end)
   end
 
   def find_solution(pavage, square_size, {row, col}, tiles) do
@@ -140,14 +171,18 @@ defmodule AdventOfCode.Day20 do
     Enum.map(tile, &Enum.join/1)
   end
 
-  defp process_tile(tile) do
+  defp process_tile(tile, tblr_only) do
     core = tile |> Enum.map(&String.graphemes/1)
     flip_h = fliph(core)
     flip_v = flipv(core)
 
-    (produce_rotations(core) ++ produce_rotations(flip_h) ++ produce_rotations(flip_v))
-    |> Enum.map(fn tile -> to_str(tile) end)
-    |> Enum.map(&to_tblr/1)
+    combinations =
+      (produce_rotations(core) ++ produce_rotations(flip_h) ++ produce_rotations(flip_v))
+      |> Enum.map(fn tile -> to_str(tile) end)
+
+    if tblr_only,
+      do: combinations |> Enum.map(&to_tblr/1),
+      else: Enum.zip(combinations |> Enum.map(&to_tblr/1), combinations)
   end
 
   def parse(input) do
