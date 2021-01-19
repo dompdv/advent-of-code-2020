@@ -53,7 +53,6 @@ defmodule AdventOfCode.Day20 do
 
     {sol, square_size} = compute_solution(args)
     h = square_size - 1
-    IO.inspect(sol)
 
     tiled_sol =
       sol
@@ -130,6 +129,26 @@ defmodule AdventOfCode.Day20 do
         )
       end
     end
+  end
+
+  defp getrc(matrix, r, c) do
+    Enum.at(matrix, r) |> String.at(c)
+  end
+  defp getrcs(matrix, l) do
+    Enum.map(l, fn {r, c} -> getrc(matrix, r, c) end)
+  end
+  defp setrc(matrix, r, c, v) do
+    List.update_at(matrix, r,
+    fn row ->
+      if c == 0 do
+        s_after = String.slice(row, 1..-1)
+        "#{v}#{s_after}"
+      else
+        s_before = String.slice(row, 0..(c - 1))
+        s_after = String.slice(row, (c + 1)..-1)
+        "#{s_before}#{v}#{s_after}"
+      end
+    end)
   end
 
   defp rotate90(matrix) do
