@@ -4,9 +4,24 @@ defmodule AdventOfCode.Day20 do
       parse(args)
       |> Enum.map(fn {number, tile} -> {number, process_tile(tile)} end)
 
+    all_numbers =
+      tiles
+      |> Enum.map(fn {_, x} -> x end)
+      |> List.flatten()
+      |> Enum.map(&Tuple.to_list/1)
+      |> List.flatten()
+      |> Enum.frequencies()
+
+    rank =
+      tiles
+      |> Enum.map(fn {number, tile} ->
+        {number,
+         hd(tile) |> Tuple.to_list() |> Enum.reduce(0, fn x, acc -> acc + all_numbers[x] end)}
+      end)
+      |> Map.new()
+
     square_size = :math.sqrt(Enum.count(tiles)) |> trunc()
     h = square_size - 1
-    IO.inspect({"Start", square_size})
 
     flat_tiles =
       tiles
@@ -14,6 +29,7 @@ defmodule AdventOfCode.Day20 do
         for comb <- tile, do: {number, comb}
       end)
       |> List.flatten()
+      |> Enum.sort(fn {n1, _}, {n2, _} -> rank[n1] < rank[n2] end)
 
     sol = find_solution(%{}, square_size, {0, 0}, flat_tiles)
 
@@ -29,7 +45,6 @@ defmodule AdventOfCode.Day20 do
   end
 
   def find_solution(pavage, square_size, {row, col}, tiles) do
-    IO.inspect({row, col})
     # si tout le pavage est rempli, alors on a trouvé une solution
     if row == square_size do
       pavage
