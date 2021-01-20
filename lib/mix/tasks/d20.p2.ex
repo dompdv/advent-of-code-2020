@@ -113,6 +113,7 @@ Tile 3079:
 ..#.......
 ..#.###...
 "
+    input = AdventOfCode.Input.get!(20, 2020)
 
     if Enum.member?(args, "-b"),
       do: Benchee.run(%{part_2: fn -> input |> part2() end}),

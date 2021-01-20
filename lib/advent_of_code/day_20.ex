@@ -68,12 +68,44 @@ defmodule AdventOfCode.Day20 do
               for c <- 0..h,
                   do: Enum.at(tiled_sol[{div(r, line_per_tile), c}], rem(r, line_per_tile))
             )
+
+    core = image |> Enum.map(&String.graphemes/1)
+    flip_h = fliph(core)
+    flip_v = flipv(core)
+
+    {snakes, in_image} =
+      (produce_rotations(core) ++ produce_rotations(flip_h) ++ produce_rotations(flip_v))
+      |> Enum.map(fn tile -> to_str(tile) end)
+      |> Enum.map(fn image -> {identify_snake(image), image} end)
+      |> Enum.filter(fn {l, _image} -> not Enum.empty?(l) end)
+      |> hd()
+
+    Enum.reduce(snakes, in_image, fn {r, c}, im -> set_deltarcs(im, r, c, snake(), "0") end)
+    |> Enum.map(&String.graphemes/1)
+    |> List.flatten()
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.sum()
+  end
+
+  defp identify_snake(image) do
+    {h_image, w_image} = {Enum.count(image), String.length(hd(image))}
+    s = snake()
+
+    {h_snake, w_snake} =
+      {Enum.max(Enum.map(s, fn x -> elem(x, 0) end)),
+       Enum.max(Enum.map(s, fn x -> elem(x, 1) end))}
+
+    full_snake = String.duplicate("1", Enum.count(s))
+
+    for(r <- 0..(h_image - h_snake - 1), c <- 0..(w_image - w_snake - 1), do: {r, c})
+    |> Enum.filter(fn {r, c} -> get_snake(image, r, c) == full_snake end)
   end
 
   def trim_matrix(matrix) do
     matrix |> Enum.slice(1..-2) |> Enum.map(fn s -> String.slice(s, 1..-2) end)
   end
 
+  @spec find_solution(any, any, {any, any}, any) :: any
   def find_solution(pavage, square_size, {row, col}, tiles) do
     # si tout le pavage est rempli, alors on a trouvé une solution
     if row == square_size do
@@ -131,15 +163,52 @@ defmodule AdventOfCode.Day20 do
     end
   end
 
-  defp getrc(matrix, r, c) do
+  defp snake do
+    [
+      {0, 18},
+      {1, 0},
+      {1, 5},
+      {1, 6},
+      {1, 11},
+      {1, 12},
+      {1, 17},
+      {1, 18},
+      {1, 19},
+      {2, 1},
+      {2, 4},
+      {2, 7},
+      {2, 10},
+      {2, 13},
+      {2, 16}
+    ]
+  end
+
+  defp get_snake(matrix, r, c) do
+    get_deltarc(matrix, r, c, snake()) |> Enum.join()
+  end
+
+  def get_deltarc(matrix, r, c, l) do
+    get_rcs(matrix, Enum.map(l, fn {rl, cl} -> {rl + r, cl + c} end))
+  end
+
+  defp get_rc(matrix, r, c) do
     Enum.at(matrix, r) |> String.at(c)
   end
-  defp getrcs(matrix, l) do
-    Enum.map(l, fn {r, c} -> getrc(matrix, r, c) end)
+
+  defp get_rcs(matrix, l) do
+    Enum.map(l, fn {r, c} -> get_rc(matrix, r, c) end)
   end
-  defp setrc(matrix, r, c, v) do
-    List.update_at(matrix, r,
-    fn row ->
+
+  defp set_deltarcs(matrix, r, c, l, v) do
+    set_rcs(matrix, Enum.map(l, fn {rl, cl} -> {rl + r, cl + c} end), v)
+  end
+
+  defp set_rcs(matrix, l, v) do
+    Enum.reduce(l, matrix, fn {r, c}, acc -> set_rc(acc, r, c, v) end)
+  end
+
+  defp set_rc(matrix, r, c, v) do
+    List.update_at(matrix, r, fn row ->
       if c == 0 do
         s_after = String.slice(row, 1..-1)
         "#{v}#{s_after}"
