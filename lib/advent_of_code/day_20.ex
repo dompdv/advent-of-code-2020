@@ -1,6 +1,8 @@
 defmodule AdventOfCode.Day20 do
   def part1(args) do
     {sol, square_size} = compute_solution(args)
+
+    # Calcule le produit des id des 4 coins
     h = square_size - 1
 
     Enum.map([{0, 0}, {0, h}, {h, 0}, {h, h}], fn
@@ -12,10 +14,13 @@ defmodule AdventOfCode.Day20 do
   end
 
   def compute_solution(args) do
+    # Prepare les tuiles à partir du fichier d'entrée: créé toutes les combinaisons de rotations/symétries
+    # Analyse le fichier
     tiles =
       parse(args)
       |> Enum.map(fn {number, tile} -> {number, process_tile(tile, true)} end)
 
+    # Récupère tous les côtés de toutes les combinaisons de rotations symétries et en calcule les fréquences
     all_numbers =
       tiles
       |> Enum.map(fn {_, x} -> x end)
@@ -24,6 +29,7 @@ defmodule AdventOfCode.Day20 do
       |> List.flatten()
       |> Enum.frequencies()
 
+    # Trouve un score par tuile en ajoutant les fréquences des 4 côtés
     rank =
       tiles
       |> Enum.map(fn {number, tile} ->
@@ -32,35 +38,42 @@ defmodule AdventOfCode.Day20 do
       end)
       |> Map.new()
 
+    # Calcule la taille du pavage total (racine carrée du nombre de tuiles)
     square_size = :math.sqrt(Enum.count(tiles)) |> trunc()
 
+    # Crée une liste "flat" de toutes les combinaisons de rotations/symétrie
+    # Chaque élément de la liste est {id de la tuile, {4 cotés}}
     flat_tiles =
       tiles
       |> Enum.map(fn {number, tile} ->
         for comb <- tile, do: {number, comb}
       end)
       |> List.flatten()
+      # Trie cette liste par ordre croissant des "rank". Du coup, on trouve les coins d'abord, puis les bords, puis les tuiles du milieu
       |> Enum.sort(fn {n1, _}, {n2, _} -> rank[n1] < rank[n2] end)
 
+    # Calcul récursif de la solution
     {find_solution(%{}, square_size, {0, 0}, flat_tiles), square_size}
   end
 
   def part2(args) do
+    # récupère les images des tuiles avec toutes leurs combinaisons
     tiles =
       parse(args)
       |> Enum.map(fn {number, tile} -> {number, process_tile(tile, false) |> Map.new()} end)
       |> Map.new()
 
+    # Trouve un pavage solution
     {sol, square_size} = compute_solution(args)
     h = square_size - 1
-
+    # Enlève le "tour" de chaque tuile du pavage solution
     tiled_sol =
       sol
       |> Enum.map(fn {cell, {tile, comb}} -> {cell, trim_matrix(tiles[tile][comb])} end)
       |> Map.new()
 
     line_per_tile = Enum.count(tiled_sol[{0, 0}])
-
+    # Crée une image résultante en mettant bout à bout toutes les tuiles
     image =
       for r <- 0..(square_size * line_per_tile - 1),
           do:
@@ -69,10 +82,12 @@ defmodule AdventOfCode.Day20 do
                   do: Enum.at(tiled_sol[{div(r, line_per_tile), c}], rem(r, line_per_tile))
             )
 
+    # Genère une liste de toutes les combinaisons/symétries
     core = image |> Enum.map(&String.graphemes/1)
     flip_h = fliph(core)
     flip_v = flipv(core)
 
+    # Identifie les monstres marins dans l'image
     {snakes, in_image} =
       (produce_rotations(core) ++ produce_rotations(flip_h) ++ produce_rotations(flip_v))
       |> Enum.map(fn tile -> to_str(tile) end)
@@ -80,6 +95,7 @@ defmodule AdventOfCode.Day20 do
       |> Enum.filter(fn {l, _image} -> not Enum.empty?(l) end)
       |> hd()
 
+    # Met des "0" à la place des monstres détectés, puis somme les "1"
     Enum.reduce(snakes, in_image, fn {r, c}, im -> set_deltarcs(im, r, c, snake(), "0") end)
     |> Enum.map(&String.graphemes/1)
     |> List.flatten()
@@ -88,24 +104,28 @@ defmodule AdventOfCode.Day20 do
   end
 
   defp identify_snake(image) do
+    # Taille de l'image
     {h_image, w_image} = {Enum.count(image), String.length(hd(image))}
     s = snake()
-
+    # Taille du monstre marin
     {h_snake, w_snake} =
       {Enum.max(Enum.map(s, fn x -> elem(x, 0) end)),
        Enum.max(Enum.map(s, fn x -> elem(x, 1) end))}
 
     full_snake = String.duplicate("1", Enum.count(s))
-
+    # Boucle sur toutes les positions possibles du serpent et garde les "matchs"
     for(r <- 0..(h_image - h_snake - 1), c <- 0..(w_image - w_snake - 1), do: {r, c})
     |> Enum.filter(fn {r, c} -> get_snake(image, r, c) == full_snake end)
   end
 
-  def trim_matrix(matrix) do
-    matrix |> Enum.slice(1..-2) |> Enum.map(fn s -> String.slice(s, 1..-2) end)
-  end
-
-  @spec find_solution(any, any, {any, any}, any) :: any
+  # Coeur de l'algorithme
+  # C'est une force brute qui essaie toutes les combinaisons en commençant en haut à gauche et par balayage
+  # L'idée est de considérer à égalité toutes les combinaisons de rotations/symétries de chaque tuile
+  # Par exemple, s'il y a 9 tuiles commme dans l'exemple, "tiles" est une liste de 9 * 12 possibilités
+  # pavage  = Map { {row, colum} => {tuile id, {t,b,l,r}}}
+  # square_size = côté du pavage
+  # {row, col} = cellule du pavage à remplir. pavage doit être rempli de toutes les tuiles précédentes
+  # tiles = voir ci dessus
   def find_solution(pavage, square_size, {row, col}, tiles) do
     # si tout le pavage est rempli, alors on a trouvé une solution
     if row == square_size do
@@ -114,6 +134,7 @@ defmodule AdventOfCode.Day20 do
       # Sinon, considérons le carreau (tile) au dessus et le carreau à gauche de la position courante, s'ils existent
       {up, left} = {pavage[{row - 1, col}], pavage[{row, col - 1}]}
 
+      # Liste les tuiles qui obeissent aux contraintes (celle dont le bord gauche = le bord droit de la tuile de gauche et dont le bord haut = le bord bas de la tuile du dessus)
       filtered_tiles =
         tiles
         |> Enum.filter(fn {_number, {t, _b, l, _r}} ->
@@ -137,17 +158,23 @@ defmodule AdventOfCode.Day20 do
         end)
 
       if Enum.empty?(filtered_tiles) do
-        # Si l'on n'a pas de possibilités, c'est qu'on a fait choux blanc
+        # Si l'on n'a pas de possibilités, c'est qu'on a fait choux blanc. On revient d'un cran dans la récursivité
         nil
       else
+        # Prochaine cellule du pavage à considérer
         next_cell = if col == square_size - 1, do: {row + 1, 0}, else: {row, col + 1}
 
+        # On va essayer une par une toutes les tuiles/comboinaisons possible jusqu'à en trouver une qui marche
         filtered_tiles
         |> Enum.reduce_while(
+          # ne sert à rien; C'est un While pur et pas un reduce
           0,
           fn {number, _} = tile, _acc ->
+            # On enlève de la liste des tuiles celle qu'on va poser (tile)
             tiles_without_current_tile = tiles |> Enum.filter(fn {n, _} -> n != number end)
 
+            # La récursivité : on appelle la fonction avec un pavage sur lequel on a posé la tuile en cours (tile), en lui demandant de considérer la cellule
+            # suivante, avec une liste de tuile nettoyée de la tuile posée
             res =
               find_solution(
                 Map.put(pavage, {row, col}, tile),
@@ -183,6 +210,12 @@ defmodule AdventOfCode.Day20 do
     ]
   end
 
+  # Enlève le "tour" d'une matrice
+  def trim_matrix(matrix) do
+    matrix |> Enum.slice(1..-2) |> Enum.map(fn s -> String.slice(s, 1..-2) end)
+  end
+
+  # Plein de fonctions pour manier les matrices
   defp get_snake(matrix, r, c) do
     get_deltarc(matrix, r, c, snake()) |> Enum.join()
   end
@@ -220,6 +253,7 @@ defmodule AdventOfCode.Day20 do
     end)
   end
 
+  # Rotation de 90 degrés dans le sens des aiguilles d'une montre
   defp rotate90(matrix) do
     size = Enum.count(matrix) - 1
 
@@ -228,10 +262,12 @@ defmodule AdventOfCode.Day20 do
     end)
   end
 
+  # Symétrie 1
   defp flipv(matrix) do
     matrix |> Enum.map(fn l -> Enum.reverse(l) end)
   end
 
+  # Symétrie 2
   defp fliph(matrix) do
     Enum.reverse(matrix)
   end
@@ -243,6 +279,9 @@ defmodule AdventOfCode.Day20 do
     [matrix, matrix90, matrix180, matrix270]
   end
 
+  # Important : pour accélérer le traitement, je ne garde que les côtés d'une tuile (top, bottom, left, right)
+  # Et surtout je transforme les chaines de caractères en un nombre entier en supposant que le # sont des 1 et les . des 0
+  # j'ai transformé au tout début les # et les .
   defp to_tblr(tile) do
     {top, bottom, left, right} = {
       List.first(tile),
@@ -259,6 +298,7 @@ defmodule AdventOfCode.Day20 do
     Enum.map(tile, &Enum.join/1)
   end
 
+  # A partir d'une tuile, produit toutes les rotations/symétries et, éventuellement, extrait les côtés en les codant en integer
   defp process_tile(tile, tblr_only) do
     core = tile |> Enum.map(&String.graphemes/1)
     flip_h = fliph(core)
@@ -273,6 +313,7 @@ defmodule AdventOfCode.Day20 do
       else: Enum.zip(combinations |> Enum.map(&to_tblr/1), combinations)
   end
 
+  # Analyse le fichier d'entrée. Remplace # et . au passage en 1 et 0
   def parse(input) do
     input
     |> String.replace("#", "1")
