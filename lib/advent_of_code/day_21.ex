@@ -25,6 +25,20 @@ defmodule AdventOfCode.Day21 do
     |> Enum.count()
   end
 
+  def part2(args) do
+    # Parse le fichier d'entrée
+    raw = parse(args)
+    build_allergens_set(raw)
+    # Trouve la liste de corresponcance {allergene,  ingredient}
+    |> solve()
+    # Trie par ordre alpha des allergenes
+    |> Enum.sort(fn {a1, _}, {a2, _} -> a1 < a2 end)
+    # Garde uniquement les aliments
+    |> Enum.map(&elem(&1, 1))
+    # Trie par ordre alpha
+    |> Enum.join(",")
+  end
+
   def build_allergens_set(raw), do: build_allergens_set(raw, %{})
 
   def build_allergens_set([], a_set), do: a_set |> Map.to_list()
@@ -61,12 +75,10 @@ defmodule AdventOfCode.Day21 do
         |> Enum.map(fn {a, i_list} ->
           {a, Enum.map(i_list, fn l -> MapSet.delete(l, ingredient) end)}
         end)
+
       # continue avec le reste de la liste
       solve(new_rest, [{allergen, ingredient} | sol])
     end
-  end
-
-  def part2(_args) do
   end
 
   defp parse_line(line) do
