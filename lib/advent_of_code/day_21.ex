@@ -28,6 +28,7 @@ defmodule AdventOfCode.Day21 do
   def part2(args) do
     # Parse le fichier d'entrée
     raw = parse(args)
+
     build_allergens_set(raw)
     # Trouve la liste de corresponcance {allergene,  ingredient}
     |> solve()
