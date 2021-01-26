@@ -24,6 +24,7 @@ defmodule AdventOfCode.Day24 do
       [{2, 0}, {1, -1}, {-1, -1}, {-2, 0}, {-1, 1}, {1, 1}]
       |> Enum.map(fn {dx, dy} -> Map.get(tiles, {x + dx, y + dy}, 0) end)
       |> Enum.sum()
+
     # Règle de transition
     case Map.get(tiles, cell, 0) do
       0 -> if surroundings == 2, do: 1, else: 0
