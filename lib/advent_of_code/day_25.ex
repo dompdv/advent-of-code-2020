@@ -2,7 +2,7 @@ defmodule AdventOfCode.Day25 do
   def part1(args) do
     {card_pk, door_pk} = args
     {card_loop_size, door_loop_size} = {loop_until(7, card_pk), loop_until(7, door_pk)}
-    {card_ek, door_ek} = {loop(door_pk, card_loop_size), loop(card_pk, door_loop_size)}
+    {loop(door_pk, card_loop_size), loop(card_pk, door_loop_size)}
   end
 
   def loop_until(subject, target) do
@@ -14,14 +14,10 @@ defmodule AdventOfCode.Day25 do
   end
 
   def loop(subject, loop_size) do
-    1..loop_size
-    |> Enum.reduce(
-      1,
-      fn _, acc -> rem(subject * acc, 20_201_227) end
-    )
+    Enum.reduce(1..loop_size, 1, fn _, acc -> rem(subject * acc, 20_201_227) end)
   end
 
-  def part2(args) do
-    args
+  def part2(_args) do
+    "done"
   end
 end
