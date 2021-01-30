@@ -18,7 +18,7 @@ abbbab
 aaabbb
 aaaabbb)
 
-    input = AdventOfCode.Input.get!(19, 2020)
+    #input = AdventOfCode.Input.get!(19, 2020)
 
     if Enum.member?(args, "-b"),
       do: Benchee.run(%{part_1: fn -> input |> part1() end}),
